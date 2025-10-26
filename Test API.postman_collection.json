@@ -1,0 +1,782 @@
+{
+	"info": {
+		"_postman_id": "0b5f949e-860c-4301-b278-2e60d855d035",
+		"name": "Test API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23165738"
+	},
+	"item": [
+		{
+			"name": "Assignment Test - API",
+			"item": [
+				{
+					"name": "TC_01 - Validate List User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// --- PRE-REQUEST SCRIPT ---\r",
+									"\r",
+									"// 1. Cek environment / variable page\r",
+									"if (!pm.variables.get(\"page\")) {\r",
+									"    pm.environment.set(\"page\", 2); // default\r",
+									"    console.log(\"Page not set. Defaulting to 2\");\r",
+									"}\r",
+									"\r",
+									"// 2. Catat waktu mulai (untuk performance test)\r",
+									"pm.environment.set(\"start_time\", Date.now());\r",
+									"\r",
+									"// 3. Log info ke Postman Console\r",
+									"console.log(\"🚀 Sending request to:\", pm.request.url.toString());\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// --- TEST SCRIPT ---\r",
+									"\r",
+									"// ✅ Parse JSON\r",
+									"let jsonData;\r",
+									"try {\r",
+									"    jsonData = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    pm.test(\"Response is valid JSON\", function () {\r",
+									"        pm.expect.fail(\"Response is not valid JSON\");\r",
+									"    });\r",
+									"    return; // stop if JSON invalid\r",
+									"}\r",
+									"\r",
+									"// ✅ Basic validations\r",
+									"pm.test(\"Status code is 200 (OK)\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response time < 1000ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Content-Type is JSON\", function () {\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+									"});\r",
+									"\r",
+									"// ✅ Structural checks\r",
+									"pm.test(\"Response has expected keys\", function () {\r",
+									"    pm.expect(jsonData).to.have.keys([\r",
+									"        \"page\",\r",
+									"        \"per_page\",\r",
+									"        \"total\",\r",
+									"        \"total_pages\",\r",
+									"        \"data\",\r",
+									"        \"support\",\r",
+									"        \"_meta\"\r",
+									"    ]);\r",
+									"});\r",
+									"\r",
+									"// ✅ Validate data array\r",
+									"pm.test(\"Data array is not empty and contains expected fields\", function () {\r",
+									"    pm.expect(jsonData.data).to.be.an(\"array\").that.is.not.empty;\r",
+									"    jsonData.data.forEach(user => {\r",
+									"        pm.expect(user).to.have.property(\"id\").that.is.a(\"number\");\r",
+									"        pm.expect(user).to.have.property(\"email\").that.is.a(\"string\");\r",
+									"        pm.expect(user).to.have.property(\"first_name\").that.is.a(\"string\");\r",
+									"        pm.expect(user).to.have.property(\"last_name\").that.is.a(\"string\");\r",
+									"        pm.expect(user).to.have.property(\"avatar\").that.is.a(\"string\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// ✅ Field value validation\r",
+									"pm.test(\"All emails end with @reqres.in\", function () {\r",
+									"    jsonData.data.forEach(u => {\r",
+									"        pm.expect(u.email).to.match(/@reqres\\.in$/);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// ✅ Cross-field validation example\r",
+									"pm.test(\"User full name is combination of first and last name\", function () {\r",
+									"    jsonData.data.forEach(u => {\r",
+									"        let fullName = `${u.first_name} ${u.last_name}`;\r",
+									"        pm.expect(fullName.length).to.be.above(3); // simple logical check\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// ✅ Pagination logic validation\r",
+									"pm.test(\"Pagination values make sense\", function () {\r",
+									"    pm.expect(jsonData.page).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.per_page).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.total_pages).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.total).to.be.at.least(jsonData.data.length);\r",
+									"});\r",
+									"\r",
+									"// ✅ Support section validation\r",
+									"pm.test(\"Support section contains text and URL\", function () {\r",
+									"    pm.expect(jsonData.support).to.have.property(\"url\").that.includes(\"http\");\r",
+									"    pm.expect(jsonData.support).to.have.property(\"text\").that.is.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"// ✅ Optional: Performance logging\r",
+									"let start = pm.environment.get(\"start_time\");\r",
+									"if (start) {\r",
+									"    let duration = Date.now() - start;\r",
+									"    console.log(`⏱ Duration: ${duration} ms`);\r",
+									"    pm.environment.unset(\"start_time\");\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://reqres.in/api/users?page=2",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_02 - Validate Single User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// --- PRE-REQUEST SCRIPT ---\r",
+									"\r",
+									"// 1. Cek environment / variable page\r",
+									"if (!pm.variables.get(\"page\")) {\r",
+									"    pm.environment.set(\"page\", 2); // default\r",
+									"    console.log(\"Page not set. Defaulting to 2\");\r",
+									"}\r",
+									"\r",
+									"// 2. Catat waktu mulai (untuk performance test)\r",
+									"pm.environment.set(\"start_time\", Date.now());\r",
+									"\r",
+									"// 3. Log info ke Postman Console\r",
+									"console.log(\"🚀 Sending request to:\", pm.request.url.toString());\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// --- TC02: Validate Single User ---\r",
+									"let res;\r",
+									"\r",
+									"// 1️⃣ Parsing JSON\r",
+									"try {\r",
+									"    res = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    pm.test(\"Response is valid JSON\", () => {\r",
+									"        pm.expect.fail(\"Response is not valid JSON\");\r",
+									"    });\r",
+									"    return;\r",
+									"}\r",
+									"\r",
+									"// 2️⃣ Basic checks\r",
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+									"pm.test(\"Response time < 1000ms\", () => pm.expect(pm.response.responseTime).to.be.below(1000));\r",
+									"\r",
+									"// 3️⃣ Structure validation\r",
+									"pm.test(\"Response has expected top-level keys\", () => {\r",
+									"    pm.expect(res).to.have.keys([\"data\", \"support\", \"_meta\"]);\r",
+									"});\r",
+									"\r",
+									"// 4️⃣ Validate user object\r",
+									"pm.test(\"User object has correct fields\", () => {\r",
+									"    const user = res.data;\r",
+									"    pm.expect(user).to.have.keys([\"id\", \"email\", \"first_name\", \"last_name\", \"avatar\"]);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User ID is correct (id = 2)\", () => {\r",
+									"    pm.expect(res.data.id).to.eql(2);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User email format is valid\", () => {\r",
+									"    pm.expect(res.data.email).to.match(/^[\\w.-]+@[\\w.-]+\\.\\w+$/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User avatar is a valid URL\", () => {\r",
+									"    pm.expect(res.data.avatar).to.match(/^https?:\\/\\/.+/);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"User names are not empty\", () => {\r",
+									"    pm.expect(res.data.first_name).to.not.be.empty;\r",
+									"    pm.expect(res.data.last_name).to.not.be.empty;\r",
+									"});\r",
+									"\r",
+									"// 5️⃣ Validate support info\r",
+									"pm.test(\"Support section has url and text\", () => {\r",
+									"    pm.expect(res.support).to.have.property(\"url\");\r",
+									"    pm.expect(res.support).to.have.property(\"text\");\r",
+									"});\r",
+									"\r",
+									"// 6️⃣ Validate _meta section\r",
+									"pm.test(\"_meta section contains key info\", () => {\r",
+									"    pm.expect(res._meta).to.have.property(\"powered_by\");\r",
+									"    pm.expect(res._meta).to.have.property(\"docs_url\");\r",
+									"    pm.expect(res._meta.features).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// 7️⃣ Save values for chaining (optional)\r",
+									"pm.environment.set(\"user_email\", res.data.email);\r",
+									"pm.environment.set(\"user_firstname\", res.data.first_name);\r",
+									"\r",
+									"console.log(`✅ User '${res.data.first_name} ${res.data.last_name}' validated successfully.`);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "x-api-key: reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://reqres.in/api/users/2",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_03  - Non exist user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// --- TEST SCRIPT ---\r",
+									"\r",
+									"// ✅ Parse JSON safely\r",
+									"let jsonData;\r",
+									"try {\r",
+									"    jsonData = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    pm.test(\"Response is valid JSON\", function () {\r",
+									"        pm.expect.fail(\"Response is not valid JSON\");\r",
+									"    });\r",
+									"    return; // stop if JSON invalid\r",
+									"}\r",
+									"\r",
+									"// ✅ Basic validations\r",
+									"pm.test(\"Status code is 200 (OK)\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response time < 1000ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Content-Type is JSON\", function () {\r",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+									"});\r",
+									"\r",
+									"// ✅ Structural checks\r",
+									"pm.test(\"Response has expected keys\", function () {\r",
+									"    pm.expect(jsonData).to.have.keys([\r",
+									"        \"page\",\r",
+									"        \"per_page\",\r",
+									"        \"total\",\r",
+									"        \"total_pages\",\r",
+									"        \"data\",\r",
+									"        \"support\",\r",
+									"        \"_meta\"\r",
+									"    ]);\r",
+									"});\r",
+									"\r",
+									"// ✅ Data validation (safe check for empty arrays)\r",
+									"pm.test(\"Data array exists and validated if not empty\", function () {\r",
+									"    pm.expect(jsonData).to.have.property(\"data\");\r",
+									"    \r",
+									"    if (Array.isArray(jsonData.data) && jsonData.data.length > 0) {\r",
+									"        console.log(`✅ Data array length: ${jsonData.data.length}`);\r",
+									"        jsonData.data.forEach(u => {\r",
+									"            pm.expect(u).to.have.property(\"id\");\r",
+									"            pm.expect(u).to.have.property(\"email\");\r",
+									"            pm.expect(u).to.have.property(\"first_name\");\r",
+									"            pm.expect(u).to.have.property(\"last_name\");\r",
+									"            pm.expect(u).to.have.property(\"avatar\");\r",
+									"            pm.expect(u.email).to.match(/@reqres\\.in$/, `Email ${u.email} should end with @reqres.in`);\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.warn(\"⚠️ Data array is empty. Skipping user field validation.\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"// ✅ Cross-field validation example\r",
+									"pm.test(\"User full name logical validation (if data available)\", function () {\r",
+									"    if (jsonData.data.length > 0) {\r",
+									"        jsonData.data.forEach(u => {\r",
+									"            let fullName = `${u.first_name} ${u.last_name}`;\r",
+									"            pm.expect(fullName.length).to.be.above(3);\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.warn(\"⚠️ Data array empty, skipping name validation.\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"// ✅ Pagination logic validation\r",
+									"pm.test(\"Pagination values make sense\", function () {\r",
+									"    pm.expect(jsonData.page).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.per_page).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.total_pages).to.be.at.least(1);\r",
+									"    pm.expect(jsonData.total).to.be.at.least(0);\r",
+									"});\r",
+									"\r",
+									"// ✅ Support section validation\r",
+									"pm.test(\"Support section contains text and URL\", function () {\r",
+									"    pm.expect(jsonData.support).to.have.property(\"url\").that.includes(\"http\");\r",
+									"    pm.expect(jsonData.support).to.have.property(\"text\").that.is.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"// ✅ Optional: Performance logging\r",
+									"let start = pm.environment.get(\"start_time\");\r",
+									"if (start) {\r",
+									"    let duration = Date.now() - start;\r",
+									"    console.log(`⏱ Duration: ${duration} ms`);\r",
+									"    pm.environment.unset(\"start_time\");\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://reqres.in/api/users?page=54",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "54"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_04  - Create user",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));\r",
+									"pm.test(\"Response contains id and createdAt\", () => {\r",
+									"    pm.expect(res).to.have.property(\"id\");\r",
+									"    pm.expect(res).to.have.property(\"createdAt\");\r",
+									"});\r",
+									"pm.test(\"Name and job match request\", () => {\r",
+									"    pm.expect(res.name).to.eql(\"Andika Putra\");\r",
+									"    pm.expect(res.job).to.eql(\"QA Engineer\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Andika Putra\",\r\n  \"job\": \"QA Engineer\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://reqres.in/api/users",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_05  - Update User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));\r",
+									"pm.test(\"Fields updated correctly\", () => {\r",
+									"    pm.expect(res.name).to.eql(\"Andika Putra\");\r",
+									"    pm.expect(res.job).to.eql(\"Senior QA\");\r",
+									"});\r",
+									"pm.test(\"Response contains updatedAt\", () => pm.expect(res).to.have.property(\"updatedAt\"));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Andika Putra\",\r\n    \"job\": \"Senior QA\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://reqres.in/api/users/2",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_06  - Delete User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// --- PRE-REQUEST SCRIPT ---\r",
+									"\r",
+									"// 1. Cek environment / variable page\r",
+									"if (!pm.variables.get(\"page\")) {\r",
+									"    pm.environment.set(\"page\", 2); // default\r",
+									"    console.log(\"Page not set. Defaulting to 2\");\r",
+									"}\r",
+									"\r",
+									"// 2. Catat waktu mulai (untuk performance test)\r",
+									"pm.environment.set(\"start_time\", Date.now());\r",
+									"\r",
+									"// 3. Log info ke Postman Console\r",
+									"console.log(\"🚀 Sending request to:\", pm.request.url.toString());\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 204 No Content\", () => pm.response.to.have.status(204));\r",
+									"pm.test(\"Response body is empty\", () => pm.expect(pm.response.text()).to.eql(\"\"));\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "reqres-free-v1",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://reqres.in/api/users/1",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC_07  - Invalid API Key",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res;\r",
+									"\r",
+									"try {\r",
+									"    res = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    res = {};\r",
+									"}\r",
+									"\r",
+									"// Validasi status code\r",
+									"pm.test(\"Status code is 401 or 403\", () => {\r",
+									"    pm.expect([401, 403]).to.include(pm.response.code);\r",
+									"});\r",
+									"\r",
+									"// Validasi struktur error\r",
+									"pm.test(\"Response contains 'error' key\", () => {\r",
+									"    pm.expect(res).to.have.property(\"error\");\r",
+									"});\r",
+									"\r",
+									"// Validasi pesan error\r",
+									"pm.test(\"Error message is 'Invalid or inactive API key'\", () => {\r",
+									"    pm.expect(res.error).to.eql(\"Invalid or inactive API key\");\r",
+									"});\r",
+									"\r",
+									"// Pastikan tidak ada data lain\r",
+									"pm.test(\"Response only contains 'error' field\", () => {\r",
+									"    pm.expect(Object.keys(res).length).to.eql(1);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true,
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "test",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://reqres.in/api/users/1",
+							"protocol": "https",
+							"host": [
+								"reqres",
+								"in"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
